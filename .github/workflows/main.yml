@@ -1,4 +1,4 @@
-name: docker-build-push
+name: ci
 
 on:
   push:
@@ -7,21 +7,31 @@ jobs:
   docker:
     runs-on: ubuntu-latest
     steps:
-      -
-        name: Set up QEMU
+      - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
-      -
-        name: Set up Docker Buildx
+      
+      - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      -
-        name: Login to Docker Hub
+      
+      - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      -
-        name: Build and push
+      
+      - name: Build and export to Docker
         uses: docker/build-push-action@v6
         with:
+          load: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/docker-jenkins:second_ga
+      
+      - name: Test
+        run: |
+          docker run --rm ${{ secrets.DOCKERHUB_USERNAME }}/docker-jenkins:second_ga
+      
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/docker-jenkins:first_github_actions
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/docker-jenkins:second_ga
