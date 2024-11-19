@@ -1,0 +1,31 @@
+version: 0.2
+
+phases:
+ install:
+  runtime-versions:
+    java: corretto17
+  commands:
+    - echo "Installing Maven..."
+    - curl -sSL https://dlcdn.apache.org/maven/maven-3/3.9.4/binaries/apache-maven-3.9.4-bin.tar.gz -o apache-maven-3.9.4-bin.tar.gz
+    
+  pre_build:
+    commands:
+      - echo "Building Spring Boot WAR..."
+      - mvn package -DskipTests
+
+  build:
+    commands:
+      - echo "Building Docker image..."
+      - docker build -t spring-boot-app .
+      - docker tag spring-boot-app:latest $DOCKER_HUB_USERNAME/docker-jenkins:cicd
+
+  post_build:
+    commands:
+      - echo "Logging in to Docker Hub..."
+      - echo "$DOCKER_HUB_PASSWORD" | docker login --username $DOCKER_HUB_USERNAME --password-stdin
+      - echo "Pushing Docker image to Docker Hub..."
+      - docker push $DOCKER_HUB_USERNAME/docker-jenkins:cicd
+
+artifacts:
+  files:
+    - '*/'
